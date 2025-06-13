@@ -1,4 +1,3 @@
-const paypal = require("../../helpers/paypal");
 const Order = require("../../models/Order");
 const Cart = require("../../models/Cart");
 const Product = require("../../models/Product");
@@ -9,88 +8,52 @@ const createOrder = async (req, res) => {
       userId,
       cartItems,
       addressInfo,
-      orderStatus,
-      paymentMethod,
-      paymentStatus,
-      totalAmount,
-      orderDate,
-      orderUpdateDate,
-      paymentId,
-      payerId,
       cartId,
     } = req.body;
 
-    const create_payment_json = {
-      intent: "sale",
-      payer: {
-        payment_method: "paypal",
-      },
-      redirect_urls: {
-        return_url: "http://localhost:5173/shop/paypal-return",
-        cancel_url: "http://localhost:5173/shop/paypal-cancel",
-      },
-      transactions: [
-        {
-          item_list: {
-            items: cartItems.map((item) => ({
-              name: item.title,
-              sku: item.productId,
-              price: item.price.toFixed(2),
-              currency: "USD",
-              quantity: item.quantity,
-            })),
-          },
-          amount: {
-            currency: "USD",
-            total: totalAmount.toFixed(2),
-          },
-          description: "description",
-        },
-      ],
-    };
+    // Calculate total amount
+    const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-    paypal.payment.create(create_payment_json, async (error, paymentInfo) => {
-      if (error) {
-        console.log(error);
-
-        return res.status(500).json({
-          success: false,
-          message: "Error while creating paypal payment",
-        });
-      } else {
-        const newlyCreatedOrder = new Order({
-          userId,
-          cartId,
-          cartItems,
-          addressInfo,
-          orderStatus,
-          paymentMethod,
-          paymentStatus,
-          totalAmount,
-          orderDate,
-          orderUpdateDate,
-          paymentId,
-          payerId,
-        });
-
-        await newlyCreatedOrder.save();
-
-        const approvalURL = paymentInfo.links.find(
-          (link) => link.rel === "approval_url"
-        ).href;
-
-        res.status(201).json({
-          success: true,
-          approvalURL,
-          orderId: newlyCreatedOrder._id,
-        });
-      }
+    // Create new order with COD
+    const newOrder = new Order({
+      userId,
+      items: cartItems,
+      addressInfo,
+      orderStatus: "Pending",
+      paymentMethod: "Cash on Delivery",
+      paymentStatus: "Pending",
+      totalAmount,
+      orderDate: new Date(),
+      orderUpdateDate: new Date()
     });
-  } catch (e) {
-    console.log(e);
+
+    // Save the order
+    const savedOrder = await newOrder.save();
+
+    // Clear the cart after order is created
+    if (cartId) {
+      await Cart.findByIdAndDelete(cartId);
+    }
+
+    // Update product quantities
+    for (const item of cartItems) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { quantity: -item.quantity } }
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      order: savedOrder
+    });
+  } catch (error) {
+    console.error("Error creating order:", error);
     res.status(500).json({
       success: false,
-      message: "Some error occured!",
+      message: "Error creating order",
+      error: error.message
     });
   }
 };

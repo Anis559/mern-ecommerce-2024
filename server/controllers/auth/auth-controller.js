@@ -19,6 +19,10 @@ const registerUser = async (req, res) => {
       userName,
       email,
       password: hashPassword,
+      role:
+        (await User.countDocuments({})) === 0 || email === "admin@admin.com"
+          ? "admin"
+          : "user",
     });
 
     await newUser.save();
@@ -116,5 +120,11 @@ const authMiddleware = async (req, res, next) => {
     });
   }
 };
+
+//update user role (example: making a user admin)
+// User.updateOne(
+//     { email: "your-email@example.com" },
+//     { $set: { role: "admin" } }
+// )
 
 module.exports = { registerUser, loginUser, logoutUser, authMiddleware };

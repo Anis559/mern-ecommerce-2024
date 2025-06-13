@@ -5,7 +5,6 @@ import UserCartItemsContent from "@/components/shopping-view/cart-items-content"
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { createNewOrder } from "@/store/shop/order-slice";
-import { Navigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 function ShoppingCheckout() {
@@ -13,7 +12,10 @@ function ShoppingCheckout() {
   const { user } = useSelector((state) => state.auth);
   const { approvalURL } = useSelector((state) => state.shopOrder);
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
-  const [isPaymentStart, setIsPaymemntStart] = useState(false);
+  const [showOtherPaymentOptions, setShowOtherPaymentOptions] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [isOrderProcessing, setIsOrderProcessing] = useState(false);
+  const [showUpiUnavailable, setShowUpiUnavailable] = useState(false);
   const dispatch = useDispatch();
   const { toast } = useToast();
 
@@ -38,7 +40,6 @@ function ShoppingCheckout() {
         title: "Your cart is empty. Please add items to proceed",
         variant: "destructive",
       });
-
       return;
     }
     if (currentSelectedAddress === null) {
@@ -46,10 +47,22 @@ function ShoppingCheckout() {
         title: "Please select one address to proceed.",
         variant: "destructive",
       });
-
       return;
     }
+    setShowOtherPaymentOptions(true); // Only show payment options, do NOT create order here
+  }
 
+  function handleSelectPaymentMethod(method) {
+    if (method === "upi") {
+      setShowUpiUnavailable(true);
+      return;
+    }
+    setSelectedPaymentMethod(method);
+  }
+
+  function handleOrderNow() {
+    if (!selectedPaymentMethod) return;
+    setIsOrderProcessing(true);
     const orderData = {
       userId: user?.id,
       cartId: cartItems?._id,
@@ -72,7 +85,7 @@ function ShoppingCheckout() {
         notes: currentSelectedAddress?.notes,
       },
       orderStatus: "pending",
-      paymentMethod: "paypal",
+      paymentMethod: selectedPaymentMethod,
       paymentStatus: "pending",
       totalAmount: totalCartAmount,
       orderDate: new Date(),
@@ -80,13 +93,10 @@ function ShoppingCheckout() {
       paymentId: "",
       payerId: "",
     };
-
     dispatch(createNewOrder(orderData)).then((data) => {
-      console.log(data, "sangam");
+      setIsOrderProcessing(false);
       if (data?.payload?.success) {
-        setIsPaymemntStart(true);
-      } else {
-        setIsPaymemntStart(false);
+        window.location.href = "/shop/payment-success";
       }
     });
   }
@@ -108,7 +118,7 @@ function ShoppingCheckout() {
         <div className="flex flex-col gap-4">
           {cartItems && cartItems.items && cartItems.items.length > 0
             ? cartItems.items.map((item) => (
-                <UserCartItemsContent cartItem={item} />
+                <UserCartItemsContent key={item.productId || item._id} cartItem={item} />
               ))
             : null}
           <div className="mt-8 space-y-4">
@@ -118,14 +128,34 @@ function ShoppingCheckout() {
             </div>
           </div>
           <div className="mt-4 w-full">
-            <Button onClick={handleInitiatePaypalPayment} className="w-full">
-              {isPaymentStart
-                ? "Processing Paypal Payment..."
-                : "Checkout with Paypal"}
+            <Button onClick={handleInitiatePaypalPayment} className="w-full" disabled={showOtherPaymentOptions}>
+              Place Order
             </Button>
+            {showOtherPaymentOptions && (
+              <div className="mt-4 w-full flex flex-col gap-2">
+                <div className="mb-2 text-lg font-semibold text-gray-700">Choose Payment Method</div>
+                <Button variant={selectedPaymentMethod === "cash-on-delivery" ? "default" : "outline"} className="w-full" onClick={() => handleSelectPaymentMethod("cash-on-delivery")}>Cash on Delivery</Button>
+                <Button variant={selectedPaymentMethod === "upi" ? "default" : "outline"} className="w-full" onClick={() => handleSelectPaymentMethod("upi")}>UPI</Button>
+                {selectedPaymentMethod && (
+                  <Button className="w-full mt-4" onClick={handleOrderNow} disabled={isOrderProcessing}>
+                    {isOrderProcessing ? "Placing Order..." : "Order Now"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
+      {/* Add popup/modal for UPI unavailable */}
+      {showUpiUnavailable && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+            <div className="text-xl font-semibold mb-4">UPI Not Available</div>
+            <div className="mb-6">Only Cash on Delivery is available at this time.</div>
+            <Button className="w-full" onClick={() => setShowUpiUnavailable(false)}>OK</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
