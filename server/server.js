@@ -19,26 +19,26 @@ const commonFeatureRouter = require("./routes/common/feature-routes");
 //create a separate file for this and then import/use that file here
 
 mongoose
-  .connect("mongodb+srv://anisurrohman27777:Pa6WodlafKw4NfUD@cluster0.yzvzvzk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-  .then(() => console.log("MongoDB connected"))
-  .catch((error) => console.log(error));
+    .connect("mongodb+srv://anisurrohman27777:Pa6WodlafKw4NfUD@cluster0.yzvzvzk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    .then(() => console.log("MongoDB connected"))
+    .catch((error) => console.log(error));
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(
-  cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "DELETE", "PUT"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Cache-Control",
-      "Expires",
-      "Pragma",
-    ],
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST", "DELETE", "PUT"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "Cache-Control",
+            "Expires",
+            "Pragma",
+        ],
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
