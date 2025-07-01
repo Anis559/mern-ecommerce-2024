@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -19,7 +20,7 @@ const commonFeatureRouter = require("./routes/common/feature-routes");
 //create a separate file for this and then import/use that file here
 
 mongoose
-    .connect("mongodb+srv://anisurrohman27777:Pa6WodlafKw4NfUD@cluster0.yzvzvzk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    .connect(process.env.MONGO_URL)
     .then(() => console.log("MongoDB connected"))
     .catch((error) => console.log(error));
 

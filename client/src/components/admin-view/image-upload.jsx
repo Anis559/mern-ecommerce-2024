@@ -3,7 +3,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
-import axios from "@/api/axios";
+import axios from "axios";
 import { Skeleton } from "../ui/skeleton";
 
 function ProductImageUpload({
