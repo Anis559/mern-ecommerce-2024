@@ -1,3 +1,4 @@
+// Replace all http://localhost:5000 with your Render backend URL
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -44,7 +45,7 @@ export const logoutUser = createAsyncThunk(
 
   async () => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/logout",
+      "https://mern-ecommerce-2024-2-backend.onrender.com/api/auth/logout",
       {},
       {
         withCredentials: true,
@@ -60,7 +61,7 @@ export const checkAuth = createAsyncThunk(
 
   async () => {
     const response = await axios.get(
-      "http://localhost:5000/api/auth/check-auth",
+      "https://mern-ecommerce-2024-2-backend.onrender.com/api/auth/check-auth",
       {
         withCredentials: true,
         headers: {
