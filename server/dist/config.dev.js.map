@@ -1,1 +1,0 @@
-{"version":3,"sources":["config.js"],"names":["require","config"],"mappings":";;AAAA;AACAA,OAAO,CAAC,QAAD,CAAP,CAAkBC,MAAlB","sourcesContent":["// This file loads environment variables from a .env file\r\nrequire('dotenv').config();\r\n"],"file":"config.dev.js"}
